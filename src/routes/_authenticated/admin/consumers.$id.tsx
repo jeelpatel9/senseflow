@@ -159,7 +159,7 @@ function ConsumerAnalysis() {
                   <XAxis dataKey="time" fontSize={10} />
                   <YAxis fontSize={10} domain={[0, "auto"]} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="reading" stroke="hsl(var(--primary))" dot={false} />
+                  <Line type="monotone" dataKey="reading" stroke="var(--primary)" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : <p className="text-sm text-muted-foreground">No readings in range.</p>}
@@ -176,7 +176,7 @@ function ConsumerAnalysis() {
                   <XAxis dataKey="date" fontSize={10} />
                   <YAxis fontSize={10} domain={[0, "auto"]} />
                   <Tooltip />
-                  <Bar dataKey="consumption" fill="hsl(var(--primary))" />
+                  <Bar dataKey="consumption" fill="var(--primary)" />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="text-sm text-muted-foreground">No consumption data.</p>}

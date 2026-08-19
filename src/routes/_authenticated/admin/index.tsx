@@ -272,7 +272,7 @@ function AdminDashboard() {
                   <XAxis dataKey="date" fontSize={10} />
                   <YAxis fontSize={10} domain={[0, "auto"]} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="consumption" stroke="hsl(var(--primary))" />
+                  <Line type="monotone" dataKey="consumption" stroke="var(--primary)" />
                 </LineChart>
               </ResponsiveContainer>
             ) : <p className="text-sm text-muted-foreground">{liveStats.isLoading || localReadings.isLoading ? "Loading readings…" : "No consumption in range."}</p>}
@@ -291,7 +291,7 @@ function AdminDashboard() {
                   <XAxis type="number" fontSize={10} domain={[0, "auto"]} />
                   <YAxis type="category" dataKey="name" fontSize={10} width={110} />
                   <Tooltip />
-                  <Bar dataKey="consumption" fill="hsl(var(--primary))" />
+                  <Bar dataKey="consumption" fill="var(--primary)" />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="text-sm text-muted-foreground">No data.</p>}

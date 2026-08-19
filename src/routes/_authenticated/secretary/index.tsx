@@ -283,7 +283,7 @@ function SecretaryDashboard() {
                     <XAxis dataKey="date" fontSize={11} />
                     <YAxis fontSize={11} domain={[0, "auto"]} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="consumption" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="consumption" stroke="var(--primary)" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -306,7 +306,7 @@ function SecretaryDashboard() {
                     <YAxis type="category" dataKey="name" width={130} fontSize={11}
                            tickFormatter={(v: string) => v.length > 14 ? v.slice(0, 14) + "…" : v} />
                     <Tooltip formatter={(v: number) => [`${v.toLocaleString()} L`, "Usage"]} />
-                    <Bar dataKey="usage" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]}>
+                    <Bar dataKey="usage" fill="var(--primary)" radius={[0, 6, 6, 0]}>
                       <LabelList dataKey="usage" position="insideRight" style={{ fill: "#fff", fontSize: 11, fontWeight: 600 }} />
                     </Bar>
                   </BarChart>

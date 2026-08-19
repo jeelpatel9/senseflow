@@ -190,7 +190,7 @@ function ConsumerDashboard() {
                   <XAxis dataKey="label" fontSize={10} />
                   <YAxis fontSize={10} domain={[0, "auto"]} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="consumption" stroke="hsl(var(--primary))" strokeWidth={2} />
+                  <Line type="monotone" dataKey="consumption" stroke="var(--primary)" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             ) : <p className="text-sm text-muted-foreground">No consumption data.</p>}
