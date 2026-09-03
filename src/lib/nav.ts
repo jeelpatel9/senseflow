@@ -10,6 +10,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Invoices", href: "/admin/invoices" },
   { label: "Senseflow Devices", href: "/admin/devices" },
   { label: "Analytics", href: "/admin/analytics" },
+  { label: "Media Coverage", href: "/admin/media-coverage" },
 ];
 
 export const SECRETARY_NAV: NavItem[] = [
