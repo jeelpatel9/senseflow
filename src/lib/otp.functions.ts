@@ -43,10 +43,11 @@ export const requestLoginOtp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const digits = data.phone.replace(/\D/g, "");
     const { data: profile, error: pErr } = await supabaseAdmin
       .from("profiles")
       .select("id, phone, is_active")
-      .eq("phone", data.phone)
+      .or(`phone.eq.${data.phone},phone.eq.${digits},phone.eq.+${digits}`)
       .maybeSingle();
     if (pErr) throw new Error(pErr.message);
     if (!profile) {
@@ -165,10 +166,11 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
       throw new Error("Incorrect code.");
     }
 
+    const digits = data.phone.replace(/\D/g, "");
     const { data: profile, error: pErr } = await supabaseAdmin
       .from("profiles")
       .select("id")
-      .eq("phone", data.phone)
+      .or(`phone.eq.${data.phone},phone.eq.${digits},phone.eq.+${digits}`)
       .maybeSingle();
     if (pErr) throw new Error(pErr.message);
     if (!profile) throw new Error("Account not found.");

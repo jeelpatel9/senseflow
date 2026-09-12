@@ -22,29 +22,66 @@ export const createConsumer = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: dup } = await supabaseAdmin
-      .from("profiles").select("id").eq("phone", data.phone).maybeSingle();
-    if (dup) throw new Error("A user with this phone number already exists.");
-
     const digits = data.phone.replace(/\D/g, "");
-    const authEmail = data.email && data.email.length > 0
-      ? data.email : `phone-${digits}@sensorflow.local`;
+    let { data: dup } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, phone")
+      .or(`phone.eq.${data.phone},phone.eq.${digits},phone.eq.+${digits}`)
+      .maybeSingle();
 
-    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email: authEmail,
-      phone: digits,
-      email_confirm: true,
-      phone_confirm: true,
-      user_metadata: { full_name: data.fullName },
-    });
-    if (createErr || !created?.user) throw new Error(createErr?.message || "Failed to create user");
-    const uid = created.user.id;
+    if (!dup && data.email) {
+      const { data: dupEmail } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .eq("email", data.email)
+        .maybeSingle();
+      dup = dupEmail;
+    }
 
-    await supabaseAdmin.from("profiles")
-      .update({ full_name: data.fullName, phone: data.phone, email: data.email ?? null })
-      .eq("id", uid);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-    await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: "consumer" });
+    let uid: string;
+    if (dup) {
+      // Check if user is already a consumer
+      const { data: existingRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", dup.id)
+        .eq("role", "consumer")
+        .maybeSingle();
+      if (existingRole) {
+        throw new Error("This phone number is already registered as a consumer.");
+      }
+
+      uid = dup.id;
+
+      // Update profile info if provided, keeping account active
+      const profilePatch: Record<string, unknown> = { is_active: true };
+      if (data.fullName) profilePatch.full_name = data.fullName;
+      if (data.email) profilePatch.email = data.email;
+      await supabaseAdmin.from("profiles").update(profilePatch).eq("id", uid);
+    } else {
+      const authEmail = data.email && data.email.length > 0
+        ? data.email : `phone-${digits}@sensorflow.local`;
+
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: authEmail,
+        phone: digits,
+        email_confirm: true,
+        phone_confirm: true,
+        user_metadata: { full_name: data.fullName },
+      });
+      if (createErr || !created?.user) throw new Error(createErr?.message || "Failed to create user");
+      uid = created.user.id;
+
+      await supabaseAdmin.from("profiles")
+        .update({ full_name: data.fullName, phone: data.phone, email: data.email ?? null, is_active: true })
+        .eq("id", uid);
+    }
+
+    // Add consumer role without clearing existing roles
+    await supabaseAdmin.from("user_roles").upsert(
+      { user_id: uid, role: "consumer" },
+      { onConflict: "user_id,role" }
+    );
 
     // consumer_details: upsert (trigger may or may not have created a row)
     await supabaseAdmin.from("consumer_details").upsert({
@@ -119,8 +156,18 @@ export const deleteConsumer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("consumer_details").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "consumer");
+
+    // Check if user has other roles remaining (e.g. secretary or admin)
+    const { data: remainingRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    if (!remainingRoles || remainingRoles.length === 0) {
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+      if (error) throw new Error(error.message);
+    }
     return { ok: true };
   });
 
